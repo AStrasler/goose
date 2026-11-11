@@ -2,7 +2,7 @@ use std::{
     collections::BTreeSet,
     fs,
     path::{Path, PathBuf},
-    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant},
 };
 
 use serde::{Deserialize, Serialize};
@@ -769,26 +769,20 @@ const fn mib(value: u64) -> u64 {
 }
 
 struct PerfWorkspace {
+    _temp_dir: tempfile::TempDir,
     path: PathBuf,
 }
 
 impl PerfWorkspace {
     fn new() -> GooseResult<Self> {
-        let unique = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_err(|error| {
-                GooseError::message(format!("system clock before unix epoch: {error}"))
-            })?
-            .as_nanos();
-        let path =
-            std::env::temp_dir().join(format!("goose-perf-budget-{}-{unique}", std::process::id()));
-        fs::create_dir_all(&path).map_err(|source| GooseError::io(&path, source))?;
-        Ok(Self { path })
-    }
-}
-
-impl Drop for PerfWorkspace {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.path);
+        let temp_dir = tempfile::Builder::new()
+            .prefix("goose-perf-budget-")
+            .tempdir()
+            .map_err(|source| GooseError::io(std::env::temp_dir(), source))?;
+        let path = temp_dir.path().to_path_buf();
+        Ok(Self {
+            _temp_dir: temp_dir,
+            path,
+        })
     }
 }
