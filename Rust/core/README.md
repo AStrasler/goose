@@ -110,7 +110,21 @@ cargo run --bin goose-health-sync-dry-run -- --input fixtures/synthetic/health_s
 cargo run --bin goose-storage-check -- --db /tmp/goose.sqlite --self-test
 cargo run --bin goose-debug-ws-contract -- --input fixtures/synthetic/debug_ws_contract_valid.json
 # Bash (PowerShell: set $env:GOOSE_DEBUG_WS_TOKEN before running cargo)
-GOOSE_DEBUG_WS_TOKEN=session-token cargo run --bin goose-debug-ws-serve -- --db /tmp/goose.sqlite --session-id debug-session-1 --port 49152
+# Bash: prompt without echo/history, then launch the already-built binary.
+cargo build --bin goose-debug-ws-serve
+read -rsp "Debug WS token: " GOOSE_DEBUG_WS_TOKEN
+printf '\\n'
+export GOOSE_DEBUG_WS_TOKEN
+./target/debug/goose-debug-ws-serve --db /tmp/goose.sqlite --session-id debug-session-1 --port 49152
+unset GOOSE_DEBUG_WS_TOKEN
+
+# PowerShell: prompt securely after building, then launch the binary.
+cargo build --bin goose-debug-ws-serve
+$secureToken = Read-Host -Prompt "Debug WS token" -AsSecureString
+$env:GOOSE_DEBUG_WS_TOKEN = [System.Net.NetworkCredential]::new("", $secureToken).Password
+& .\\target\\debug\\goose-debug-ws-serve.exe --db C:\\tmp\\goose.sqlite --session-id debug-session-1 --port 49152
+Remove-Item Env:GOOSE_DEBUG_WS_TOKEN
+Remove-Variable secureToken
 cargo run --bin goose-ui-coverage-audit -- --input ../apk-ui-inventory/coverage-map.json
 cargo run --bin goose-raw-export -- --db /tmp/goose.sqlite --output-dir /tmp/goose.goosebundle --zip-output /tmp/goose.goosebundle.zip --start 2026-05-01T00:00:00Z --end 2026-05-28T00:00:00Z
 cargo run --bin goose-export-validator -- --bundle path/to/unpacked-export

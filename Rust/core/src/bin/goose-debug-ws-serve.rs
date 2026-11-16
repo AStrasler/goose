@@ -62,7 +62,7 @@ fn run() -> goose_core::GooseResult<()> {
 
 fn debug_ws_token(token: Option<String>) -> goose_core::GooseResult<String> {
     token
-        .filter(|value| !value.is_empty())
+        .filter(|value| !value.trim().is_empty())
         .ok_or_else(|| goose_core::GooseError::message("GOOSE_DEBUG_WS_TOKEN is required"))
 }
 
@@ -73,6 +73,12 @@ mod tests {
     #[test]
     fn rejects_a_missing_debug_websocket_token() {
         assert!(debug_ws_token(None).is_err());
+    }
+
+    #[test]
+    fn rejects_an_empty_debug_websocket_token() {
+        assert!(debug_ws_token(Some(String::new())).is_err());
+        assert!(debug_ws_token(Some("  ".to_string())).is_err());
     }
 
     #[test]
