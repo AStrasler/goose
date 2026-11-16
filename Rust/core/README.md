@@ -113,7 +113,7 @@ cargo run --bin goose-debug-ws-contract -- --input fixtures/synthetic/debug_ws_c
 # Bash: prompt without echo/history, then launch the already-built binary.
 cargo build --bin goose-debug-ws-serve
 read -rsp "Debug WS token: " GOOSE_DEBUG_WS_TOKEN
-printf '\\n'
+printf '\n'
 export GOOSE_DEBUG_WS_TOKEN
 ./target/debug/goose-debug-ws-serve --db /tmp/goose.sqlite --session-id debug-session-1 --port 49152
 unset GOOSE_DEBUG_WS_TOKEN
