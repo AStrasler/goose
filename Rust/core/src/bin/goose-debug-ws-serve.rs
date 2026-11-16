@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{env, path::PathBuf};
 
 use goose_core::{
     debug_ws_server::{DebugWsServerOptions, serve_debug_ws_once},
@@ -18,8 +18,7 @@ fn run() -> goose_core::GooseResult<()> {
     let database_path = default_path(&args, "--db", "goose.sqlite")?;
     let session_id = value(&args, "--session-id")?
         .ok_or_else(|| goose_core::GooseError::message("--session-id is required"))?;
-    let token = value(&args, "--token")?
-        .ok_or_else(|| goose_core::GooseError::message("--token is required"))?;
+    let token = debug_ws_token(env::var("GOOSE_DEBUG_WS_TOKEN").ok())?;
     let bind_host = value(&args, "--bind-host")?.unwrap_or_else(|| "127.0.0.1".to_string());
     let port = parse_u16(
         value(&args, "--port")?.as_deref().unwrap_or("49152"),
@@ -58,6 +57,27 @@ fn run() -> goose_core::GooseResult<()> {
         Ok(())
     } else {
         std::process::exit(1);
+    }
+}
+
+fn debug_ws_token(token: Option<String>) -> goose_core::GooseResult<String> {
+    token
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| goose_core::GooseError::message("GOOSE_DEBUG_WS_TOKEN is required"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::debug_ws_token;
+
+    #[test]
+    fn rejects_a_missing_debug_websocket_token() {
+        assert!(debug_ws_token(None).is_err());
+    }
+
+    #[test]
+    fn accepts_a_nonempty_debug_websocket_token() {
+        assert_eq!(debug_ws_token(Some("local-session".to_string())).unwrap(), "local-session");
     }
 }
 
