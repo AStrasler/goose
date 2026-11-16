@@ -1,0 +1,22 @@
+name: Rust perf workspace security
+
+on:
+  pull_request:
+    paths:
+      - "Rust/core/Cargo.toml"
+      - "Rust/core/src/perf_budget.rs"
+      - ".github/workflows/rust-perf-workspace-security.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  workspace-security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install the repository Rust toolchain
+        run: rustup toolchain install 1.94.0 --profile minimal
+      - name: Test private workspace isolation and cleanup
+        run: cargo +1.94.0 test --manifest-path Rust/core/Cargo.toml --lib workspace_security_tests
