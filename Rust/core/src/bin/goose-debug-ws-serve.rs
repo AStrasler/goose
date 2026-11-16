@@ -19,7 +19,7 @@ fn run() -> goose_core::GooseResult<()> {
     let database_path = default_path(&args, "--db", "goose.sqlite")?;
     let session_id = value(&args, "--session-id")?
         .ok_or_else(|| goose_core::GooseError::message("--session-id is required"))?;
-    let token = debug_ws_token_from_env(env::var)?;
+    let token = debug_ws_token_from_env(|name| env::var(name))?;
     let bind_host = value(&args, "--bind-host")?.unwrap_or_else(|| "127.0.0.1".to_string());
     let port = parse_u16(
         value(&args, "--port")?.as_deref().unwrap_or("49152"),
