@@ -1,0 +1,21 @@
+name: Rust debug WebSocket token validation
+
+on:
+  pull_request:
+    paths:
+      - "Rust/core/src/bin/goose-debug-ws-serve.rs"
+      - "Rust/core/README.md"
+      - ".github/workflows/rust-debug-ws-token.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  debug-ws-token:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install repository Rust toolchain
+        run: rustup toolchain install 1.94.0 --profile minimal
+      - name: Test debug WebSocket token handling
+        run: cargo +1.94.0 test --manifest-path Rust/core/Cargo.toml --bin goose-debug-ws-serve
