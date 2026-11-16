@@ -778,11 +778,34 @@ impl PerfWorkspace {
         let temp_dir = tempfile::Builder::new()
             .prefix("goose-perf-budget-")
             .tempdir()
-            .map_err(|source| GooseError::io(std::env::temp_dir(), source))?;
+            .map_err(|source| GooseError::io(Path::new("temporary performance workspace"), source))?;
         let path = temp_dir.path().to_path_buf();
         Ok(Self {
             _temp_dir: temp_dir,
             path,
         })
+    }
+}
+
+#[cfg(test)]
+mod workspace_security_tests {
+    use super::*;
+
+    #[test]
+    fn workspaces_are_unique_isolated_and_cleaned_up() {
+        let first = PerfWorkspace::new().expect("first workspace");
+        let second = PerfWorkspace::new().expect("second workspace");
+        assert_ne!(first.path, second.path);
+        assert!(first.path.is_dir());
+        assert!(second.path.is_dir());
+
+        let marker = first.path.join("marker");
+        fs::write(&marker, b"first workspace").expect("write marker");
+        assert!(!second.path.join("marker").exists());
+
+        let first_path = first.path.clone();
+        drop(first);
+        assert!(!first_path.exists());
+        assert!(second.path.is_dir());
     }
 }
