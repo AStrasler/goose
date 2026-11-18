@@ -224,7 +224,10 @@ fn lint_file_path(
             entry.read_to_end(&mut bytes).map_err(|source| {
                 GooseError::message(format!("cannot read zip bytes: {source}"))
             })?;
-            let entry_path = format!("{display_path}!{}", entry.name());
+            let entry_name = entry.name().map_err(|source| {
+                GooseError::message(format!("cannot read zip entry {index} name: {source}"))
+            })?;
+            let entry_path = format!("{display_path}!{entry_name}");
             files.push(lint_bytes(&entry_path, &bytes));
         }
         return Ok(());
