@@ -1009,7 +1009,7 @@ fn extract_raw_export_sqlite_from_zip(
             bundle_path.display()
         ))
     })?;
-    let entry_name = raw_export_sqlite_zip_entry_name(&archive).ok_or_else(|| {
+    let entry_name = raw_export_sqlite_zip_entry_name(&archive)?.ok_or_else(|| {
         GooseError::message(format!(
             "raw export zip {} is missing data/goose.sqlite",
             bundle_path.display()
@@ -1033,23 +1033,22 @@ fn extract_raw_export_sqlite_from_zip(
 
 fn raw_export_sqlite_zip_entry_name<R: io::Read + io::Seek>(
     archive: &ZipArchive<R>,
-) -> Option<String> {
-    let matches = archive
-        .file_names()
-        .filter_map(|name| {
-            let normalized = name.replace('\\', "/");
-            if normalized == "data/goose.sqlite" || normalized.ends_with("/data/goose.sqlite") {
-                Some(name.to_string())
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>();
-    if matches.len() == 1 {
+) -> goose_core::GooseResult<Option<String>> {
+    let mut matches = Vec::new();
+    for entry_name in archive.file_names() {
+        let name = entry_name.map_err(|error| {
+            GooseError::message(format!("cannot read raw export zip entry name: {error}"))
+        })?;
+        let normalized = name.replace('\\', "/");
+        if normalized == "data/goose.sqlite" || normalized.ends_with("/data/goose.sqlite") {
+            matches.push(name.into_owned());
+        }
+    }
+    Ok(if matches.len() == 1 {
         matches.into_iter().next()
     } else {
         None
-    }
+    })
 }
 
 #[derive(Debug, Clone, Deserialize)]
